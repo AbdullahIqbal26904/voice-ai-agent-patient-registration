@@ -5,7 +5,7 @@ A voice-based AI agent that collects patient demographic information through nat
 ## Live Demo
 
 - **Phone Number**: `+1 (XXX) XXX-XXXX` _(update after Vapi provisioning)_
-- **API Base URL**: `http://<ec2-public-ip>:8000` _(update after deployment)_
+- **API Base URL**: `https://your-app.up.railway.app` _(update after Railway deployment)_
 
 ## Architecture
 
@@ -31,7 +31,7 @@ Caller ──► Vapi (Phone + STT + TTS + LLM) ──► FastAPI Server ──�
 | LLM | **OpenAI GPT-4o** | Best conversational quality for voice. Handles varied phrasing, corrections, interruptions. |
 | Backend | **Python + FastAPI** | Async support, automatic validation via Pydantic, auto-generated OpenAPI docs. |
 | Database | **Amazon RDS PostgreSQL** | Managed, persistent, proper relational constraints. Survives restarts. |
-| Hosting | **AWS EC2 (Dockerized)** | Full control, same cloud as RDS, reproducible deployment via Docker. |
+| Hosting | **Railway (Dockerized)** | One-click deploy from GitHub, auto-HTTPS, zero infra management. |
 
 ## API Endpoints
 
@@ -70,29 +70,20 @@ docker compose up --build
 
 The API will be available at `http://localhost:8000`. Interactive docs at `http://localhost:8000/docs`.
 
-### Production Deployment (AWS)
+### Production Deployment (Railway + AWS RDS)
 
-1. **Create RDS PostgreSQL instance** (db.t3.micro, PostgreSQL 16)
-2. **Launch EC2 instance** (t2.micro, Ubuntu 22.04)
-3. **SSH into EC2 and deploy**:
+1. **Create RDS PostgreSQL instance** (db.t3.micro, PostgreSQL 16, publicly accessible)
+2. **Deploy to Railway**:
+   - Go to [railway.app](https://railway.app) and create a new project
+   - Select **"Deploy from GitHub Repo"** and connect your repository
+   - Add environment variables in Railway's dashboard:
+     - `DATABASE_URL=postgresql+asyncpg://user:pass@your-rds-endpoint.amazonaws.com:5432/care_cloud`
+     - `VAPI_API_KEY=your-vapi-api-key`
+   - Railway auto-detects the `Dockerfile` and deploys
+3. **Get your Railway URL** (e.g., `https://your-app.up.railway.app`)
+4. **Configure Vapi** to point the tool server URL to `https://your-app.up.railway.app/vapi/tool-call`
 
-```bash
-sudo apt update && sudo apt install docker.io docker-compose-v2 git -y
-sudo usermod -aG docker $USER && newgrp docker
-
-git clone <repo-url>
-cd care_cloud
-
-cat > .env <<EOF
-DATABASE_URL=postgresql+asyncpg://user:pass@your-rds-endpoint:5432/care_cloud
-VAPI_API_KEY=your-vapi-api-key
-EOF
-
-docker build -t care-cloud .
-docker run -d --name care-cloud --env-file .env -p 8000:8000 --restart unless-stopped care-cloud
-```
-
-4. **Configure Vapi** to point the tool server URL to `http://<ec2-public-ip>:8000/vapi/tool-call`
+> **Note**: Make sure your RDS security group allows inbound on port 5432 from `0.0.0.0/0` (or Railway's IP ranges) so the Railway-hosted app can connect.
 
 ## Environment Variables
 
@@ -111,15 +102,13 @@ The full system prompt is documented in [`vapi_config/agent_prompt.md`](vapi_con
 
 ## Known Limitations & Trade-offs
 
-- **No HTTPS on EC2**: For a 3-hour challenge, the server runs on HTTP. Production would use Nginx + Let's Encrypt or an ALB.
 - **No authentication on the REST API**: The API is open. Production would add API key auth or OAuth.
 - **No HIPAA compliance**: This is a technical demo, not a production healthcare system.
 - **SQLAlchemy `create_all`**: Tables are auto-created on startup instead of using Alembic migrations. Fine for a demo; production would use proper migrations.
-- **Single EC2 instance**: No load balancing or auto-scaling. Single point of failure.
+- **RDS publicly accessible**: For simplicity, RDS accepts connections from any IP. Production would use VPC peering or private networking.
 
 ## Next Steps (with more time)
 
-- Add HTTPS with Nginx reverse proxy + Let's Encrypt SSL
 - Add API authentication (API key or JWT)
 - Implement Alembic migrations for proper schema versioning
 - Add automated tests (pytest + httpx for async API testing)
