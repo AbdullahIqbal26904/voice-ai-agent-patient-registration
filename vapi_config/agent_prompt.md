@@ -118,6 +118,6 @@ If the caller gives invalid data, gently re-ask: "I'm sorry, I didn't quite get 
 
 1. **Model**: Select OpenAI GPT-4o for best conversational quality
 2. **Voice**: Choose a natural-sounding voice (e.g., ElevenLabs "Rachel" or similar)
-3. **Server URL**: Set to `https://<your-ec2-ip>:8000/vapi/tool-call`
+3. **Server URL**: Set to `https://voice.nidassalon.com/vapi/tool-call`
 4. **First message**: Leave blank — the system prompt handles the greeting
 5. **End call phrases**: Enable "goodbye", "that's all", "nothing else"

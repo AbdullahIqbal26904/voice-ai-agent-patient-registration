@@ -5,7 +5,7 @@ A voice-based AI agent that collects patient demographic information through nat
 ## Live Demo
 
 - **Phone Number**: `+1 (XXX) XXX-XXXX` _(update after Vapi provisioning)_
-- **API Base URL**: `https://your-app.up.railway.app` _(update after Railway deployment)_
+- **API Base URL**: `https://voice.nidassalon.com` _(update with your domain)_
 
 ## Architecture
 
@@ -31,7 +31,7 @@ Caller ──► Vapi (Phone + STT + TTS + LLM) ──► FastAPI Server ──�
 | LLM | **OpenAI GPT-4o** | Best conversational quality for voice. Handles varied phrasing, corrections, interruptions. |
 | Backend | **Python + FastAPI** | Async support, automatic validation via Pydantic, auto-generated OpenAPI docs. |
 | Database | **Amazon RDS PostgreSQL** | Managed, persistent, proper relational constraints. Survives restarts. |
-| Hosting | **Railway (Dockerized)** | One-click deploy from GitHub, auto-HTTPS, zero infra management. |
+| Hosting | **AWS EC2 (Dockerized)** | Full control, custom domain with HTTPS via Nginx + Let's Encrypt. |
 
 ## API Endpoints
 
@@ -70,20 +70,55 @@ docker compose up --build
 
 The API will be available at `http://localhost:8000`. Interactive docs at `http://localhost:8000/docs`.
 
-### Production Deployment (Railway + AWS RDS)
+### Production Deployment (AWS EC2 + RDS + Nginx HTTPS)
 
-1. **Create RDS PostgreSQL instance** (db.t3.micro, PostgreSQL 16, publicly accessible)
-2. **Deploy to Railway**:
-   - Go to [railway.app](https://railway.app) and create a new project
-   - Select **"Deploy from GitHub Repo"** and connect your repository
-   - Add environment variables in Railway's dashboard:
-     - `DATABASE_URL=postgresql+asyncpg://user:pass@your-rds-endpoint.amazonaws.com:5432/care_cloud`
-     - `VAPI_API_KEY=your-vapi-api-key`
-   - Railway auto-detects the `Dockerfile` and deploys
-3. **Get your Railway URL** (e.g., `https://your-app.up.railway.app`)
-4. **Configure Vapi** to point the tool server URL to `https://your-app.up.railway.app/vapi/tool-call`
+**1. Create RDS PostgreSQL instance** (db.t3.micro, PostgreSQL 16)
+- Security group: allow inbound on port 5432 from your EC2 security group
 
-> **Note**: Make sure your RDS security group allows inbound on port 5432 from `0.0.0.0/0` (or Railway's IP ranges) so the Railway-hosted app can connect.
+**2. Launch EC2 instance** (t2.micro, Ubuntu 22.04)
+- Security group: allow inbound on ports 22 (SSH), 80 (HTTP), 443 (HTTPS)
+- Attach an Elastic IP so the IP stays fixed
+
+**3. Point your Namecheap domain to EC2**
+- In Namecheap DNS settings, add an **A Record**:
+  - Host: `@` (or subdomain like `api`)
+  - Value: your EC2 Elastic IP
+  - TTL: Automatic
+- Wait a few minutes for DNS propagation
+
+**4. SSH into EC2 and deploy**
+
+```bash
+# Install Docker
+sudo apt update && sudo apt install docker.io docker-compose-v2 git -y
+sudo usermod -aG docker $USER && newgrp docker
+
+# Clone repo
+git clone <your-repo-url>
+cd care_cloud
+
+# Create .env
+cat > .env <<EOF
+DATABASE_URL=postgresql+asyncpg://user:pass@your-rds-endpoint:5432/care_cloud
+VAPI_API_KEY=your-vapi-api-key
+EOF
+
+# Replace voice.nidassalon.com in nginx config
+sed -i 's/voice.nidassalon.com/yourdomain.com/g' nginx/nginx.conf
+
+# Step 1: Get SSL certificate (start Nginx on port 80 first)
+docker compose -f docker-compose.prod.yml up -d app nginx
+docker compose -f docker-compose.prod.yml run --rm certbot certonly \
+  --webroot --webroot-path=/var/www/certbot \
+  -d yourdomain.com --email your@email.com --agree-tos --no-eff-email
+
+# Step 2: Restart Nginx to load the SSL cert
+docker compose -f docker-compose.prod.yml restart nginx
+```
+
+**5. Configure Vapi** to point the tool server URL to `https://yourdomain.com/vapi/tool-call`
+
+**6. Verify**: `curl https://yourdomain.com/patients` should return patient data
 
 ## Environment Variables
 
