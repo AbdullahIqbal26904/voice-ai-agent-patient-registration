@@ -1,10 +1,12 @@
 import logging
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.database import async_session, engine
 from app.models import Base
@@ -47,6 +49,14 @@ app.add_middleware(
 
 app.include_router(patients.router)
 app.include_router(vapi_webhook.router)
+
+STATIC_DIR = Path(__file__).parent / "static"
+app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+
+
+@app.get("/dashboard")
+async def dashboard():
+    return FileResponse(str(STATIC_DIR / "dashboard.html"))
 
 
 @app.exception_handler(RequestValidationError)

@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CareCloud — Patient Registration Dashboard</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --primary-light: #dbeafe;
+            --success: #059669;
+            --success-light: #d1fae5;
+            --warning: #d97706;
+            --warning-light: #fef3c7;
+            --danger: #dc2626;
+            --danger-light: #fee2e2;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+            --radius: 8px;
+            --shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.06);
+            --shadow-lg: 0 10px 15px rgba(0,0,0,0.1), 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: var(--gray-50);
+            color: var(--gray-800);
+            line-height: 1.5;
+        }
+
+        /* Header */
+        .header {
+            background: white;
+            border-bottom: 1px solid var(--gray-200);
+            padding: 16px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo {
+            width: 36px;
+            height: 36px;
+            background: var(--primary);
+            border-radius: var(--radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 18px;
+        }
+
+        .header h1 {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--gray-900);
+        }
+
+        .header-subtitle {
+            font-size: 13px;
+            color: var(--gray-500);
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: var(--success);
+            background: var(--success-light);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--success);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .refresh-btn {
+            background: white;
+            border: 1px solid var(--gray-300);
+            padding: 8px 16px;
+            border-radius: var(--radius);
+            cursor: pointer;
+            font-size: 13px;
+            color: var(--gray-700);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.15s;
+        }
+
+        .refresh-btn:hover {
+            background: var(--gray-50);
+            border-color: var(--gray-400);
+        }
+
+        .refresh-btn.spinning svg {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Main */
+        .main {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 24px 32px;
+        }
+
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: white;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow);
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: var(--gray-500);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--gray-900);
+        }
+
+        .stat-detail {
+            font-size: 12px;
+            color: var(--gray-400);
+            margin-top: 4px;
+        }
+
+        /* Search & Filter Bar */
+        .toolbar {
+            background: white;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius) var(--radius) 0 0;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: var(--shadow);
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 10px 14px 10px 38px;
+            border: 1px solid var(--gray-300);
+            border-radius: var(--radius);
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.15s;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%239ca3af' viewBox='0 0 24 24'%3E%3Cpath d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z' stroke='%239ca3af' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: 12px center;
+        }
+
+        .search-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-light);
+        }
+
+        .filter-select {
+            padding: 10px 14px;
+            border: 1px solid var(--gray-300);
+            border-radius: var(--radius);
+            font-size: 14px;
+            color: var(--gray-700);
+            background: white;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .patient-count {
+            font-size: 13px;
+            color: var(--gray-500);
+            white-space: nowrap;
+        }
+
+        /* Table */
+        .table-container {
+            background: white;
+            border: 1px solid var(--gray-200);
+            border-top: none;
+            border-radius: 0 0 var(--radius) var(--radius);
+            overflow-x: auto;
+            box-shadow: var(--shadow);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: var(--gray-50);
+            border-bottom: 2px solid var(--gray-200);
+        }
+
+        th {
+            padding: 12px 16px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--gray-500);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 14px 16px;
+            font-size: 14px;
+            border-bottom: 1px solid var(--gray-100);
+            white-space: nowrap;
+        }
+
+        tr:hover {
+            background: var(--gray-50);
+            cursor: pointer;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        .patient-name {
+            font-weight: 600;
+            color: var(--gray-900);
+        }
+
+        .patient-id {
+            font-size: 12px;
+            color: var(--gray-400);
+            font-family: monospace;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .badge-blue { background: var(--primary-light); color: var(--primary); }
+        .badge-green { background: var(--success-light); color: var(--success); }
+        .badge-yellow { background: var(--warning-light); color: var(--warning); }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--gray-400);
+        }
+
+        .empty-state svg {
+            margin-bottom: 16px;
+        }
+
+        .empty-state h3 {
+            color: var(--gray-600);
+            margin-bottom: 4px;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.4);
+            z-index: 200;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(2px);
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: white;
+            border-radius: 12px;
+            width: 600px;
+            max-width: 90vw;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--gray-200);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .modal-header h2 {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--gray-400);
+            padding: 4px;
+            border-radius: 4px;
+            transition: color 0.15s;
+        }
+
+        .modal-close:hover {
+            color: var(--gray-700);
+        }
+
+        .modal-body {
+            padding: 24px;
+        }
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .detail-group {
+            margin-bottom: 0;
+        }
+
+        .detail-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .detail-label {
+            font-size: 12px;
+            color: var(--gray-500);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 2px;
+        }
+
+        .detail-value {
+            font-size: 15px;
+            color: var(--gray-900);
+            font-weight: 500;
+        }
+
+        .detail-value.empty {
+            color: var(--gray-300);
+            font-style: italic;
+            font-weight: 400;
+        }
+
+        .detail-section-title {
+            grid-column: 1 / -1;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--gray-700);
+            padding-top: 12px;
+            border-top: 1px solid var(--gray-100);
+            margin-top: 4px;
+        }
+
+        .modal-footer {
+            padding: 16px 24px;
+            border-top: 1px solid var(--gray-200);
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border-radius: var(--radius);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s;
+            border: 1px solid transparent;
+        }
+
+        .btn-secondary {
+            background: white;
+            border-color: var(--gray-300);
+            color: var(--gray-700);
+        }
+
+        .btn-secondary:hover {
+            background: var(--gray-50);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #b91c1c;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            padding: 12px 20px;
+            border-radius: var(--radius);
+            font-size: 14px;
+            font-weight: 500;
+            color: white;
+            z-index: 300;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .toast.success { background: var(--success); }
+        .toast.error { background: var(--danger); }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: var(--gray-400);
+        }
+
+        .loading-spinner {
+            width: 32px;
+            height: 32px;
+            border: 3px solid var(--gray-200);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 12px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .header { padding: 12px 16px; }
+            .main { padding: 16px; }
+            .toolbar { flex-wrap: wrap; }
+            .search-input { min-width: 100%; }
+            .detail-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div class="header-left">
+        <div class="logo">C</div>
+        <div>
+            <h1>CareCloud</h1>
+            <div class="header-subtitle">Patient Registration Dashboard</div>
+        </div>
+    </div>
+    <div class="header-right">
+        <div class="status-badge">
+            <span class="status-dot"></span>
+            System Online
+        </div>
+        <button class="refresh-btn" onclick="loadPatients()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+            Refresh
+        </button>
+    </div>
+</div>
+
+<div class="main">
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-label">Total Patients</div>
+            <div class="stat-value" id="stat-total">-</div>
+            <div class="stat-detail">Registered in system</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Today's Registrations</div>
+            <div class="stat-value" id="stat-today">-</div>
+            <div class="stat-detail" id="stat-today-date"></div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">With Insurance</div>
+            <div class="stat-value" id="stat-insured">-</div>
+            <div class="stat-detail">Have insurance on file</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Emergency Contacts</div>
+            <div class="stat-value" id="stat-emergency">-</div>
+            <div class="stat-detail">Have emergency contact</div>
+        </div>
+    </div>
+
+    <div class="toolbar">
+        <input type="text" class="search-input" id="searchInput" placeholder="Search by name, phone, city...">
+        <select class="filter-select" id="stateFilter">
+            <option value="">All States</option>
+        </select>
+        <select class="filter-select" id="sexFilter">
+            <option value="">All</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Other">Other</option>
+            <option value="Decline to Answer">Decline</option>
+        </select>
+        <span class="patient-count" id="patientCount"></span>
+    </div>
+
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Patient</th>
+                    <th>Date of Birth</th>
+                    <th>Sex</th>
+                    <th>Phone</th>
+                    <th>Location</th>
+                    <th>Insurance</th>
+                    <th>Registered</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                <tr><td colspan="7" class="loading"><div class="loading-spinner"></div>Loading patients...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Patient Detail Modal -->
+<div class="modal-overlay" id="modal">
+    <div class="modal">
+        <div class="modal-header">
+            <h2 id="modalTitle">Patient Details</h2>
+            <button class="modal-close" onclick="closeModal()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="detail-grid" id="modalContent"></div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-danger" id="deleteBtn">Delete Patient</button>
+            <button class="btn btn-secondary" onclick="closeModal()">Close</button>
+        </div>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+    const API = window.location.origin;
+    let allPatients = [];
+
+    const US_STATES = {
+        AL:'Alabama',AK:'Alaska',AZ:'Arizona',AR:'Arkansas',CA:'California',CO:'Colorado',
+        CT:'Connecticut',DE:'Delaware',FL:'Florida',GA:'Georgia',HI:'Hawaii',ID:'Idaho',
+        IL:'Illinois',IN:'Indiana',IA:'Iowa',KS:'Kansas',KY:'Kentucky',LA:'Louisiana',
+        ME:'Maine',MD:'Maryland',MA:'Massachusetts',MI:'Michigan',MN:'Minnesota',MS:'Mississippi',
+        MO:'Missouri',MT:'Montana',NE:'Nebraska',NV:'Nevada',NH:'New Hampshire',NJ:'New Jersey',
+        NM:'New Mexico',NY:'New York',NC:'North Carolina',ND:'North Dakota',OH:'Ohio',OK:'Oklahoma',
+        OR:'Oregon',PA:'Pennsylvania',RI:'Rhode Island',SC:'South Carolina',SD:'South Dakota',
+        TN:'Tennessee',TX:'Texas',UT:'Utah',VT:'Vermont',VA:'Virginia',WA:'Washington',
+        WV:'West Virginia',WI:'Wisconsin',WY:'Wyoming',DC:'Washington DC'
+    };
+
+    async function loadPatients() {
+        const btn = document.querySelector('.refresh-btn');
+        btn.classList.add('spinning');
+
+        try {
+            const res = await fetch(`${API}/patients`);
+            const json = await res.json();
+            allPatients = json.data || [];
+            updateStats();
+            populateStateFilter();
+            filterAndRender();
+        } catch (e) {
+            showToast('Failed to load patients', 'error');
+        } finally {
+            btn.classList.remove('spinning');
+        }
+    }
+
+    function updateStats() {
+        const today = new Date().toISOString().split('T')[0];
+
+        document.getElementById('stat-total').textContent = allPatients.length;
+        document.getElementById('stat-today').textContent = allPatients.filter(p =>
+            p.created_at && p.created_at.startsWith(today)
+        ).length;
+        document.getElementById('stat-today-date').textContent = new Date().toLocaleDateString('en-US', {
+            month: 'long', day: 'numeric', year: 'numeric'
+        });
+        document.getElementById('stat-insured').textContent = allPatients.filter(p => p.insurance_provider).length;
+        document.getElementById('stat-emergency').textContent = allPatients.filter(p => p.emergency_contact_name).length;
+    }
+
+    function populateStateFilter() {
+        const states = [...new Set(allPatients.map(p => p.state))].sort();
+        const select = document.getElementById('stateFilter');
+        select.innerHTML = '<option value="">All States</option>';
+        states.forEach(s => {
+            const opt = document.createElement('option');
+            opt.value = s;
+            opt.textContent = US_STATES[s] || s;
+            select.appendChild(opt);
+        });
+    }
+
+    function filterAndRender() {
+        const search = document.getElementById('searchInput').value.toLowerCase();
+        const state = document.getElementById('stateFilter').value;
+        const sex = document.getElementById('sexFilter').value;
+
+        let filtered = allPatients.filter(p => {
+            if (state && p.state !== state) return false;
+            if (sex && p.sex !== sex) return false;
+            if (search) {
+                const haystack = `${p.first_name} ${p.last_name} ${p.phone_number} ${p.city} ${p.email || ''}`.toLowerCase();
+                if (!haystack.includes(search)) return false;
+            }
+            return true;
+        });
+
+        document.getElementById('patientCount').textContent = `${filtered.length} of ${allPatients.length} patients`;
+        renderTable(filtered);
+    }
+
+    function formatPhone(phone) {
+        if (!phone || phone.length !== 10) return phone || '-';
+        return `(${phone.slice(0,3)}) ${phone.slice(3,6)}-${phone.slice(6)}`;
+    }
+
+    function formatDate(dateStr) {
+        if (!dateStr) return '-';
+        const d = new Date(dateStr + 'T00:00:00');
+        return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+
+    function formatTimestamp(ts) {
+        if (!ts) return '-';
+        const d = new Date(ts);
+        return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
+    }
+
+    function sexBadgeClass(sex) {
+        if (sex === 'Male') return 'badge-blue';
+        if (sex === 'Female') return 'badge-green';
+        return 'badge-yellow';
+    }
+
+    function renderTable(patients) {
+        const tbody = document.getElementById('tableBody');
+
+        if (patients.length === 0) {
+            tbody.innerHTML = `
+                <tr><td colspan="7">
+                    <div class="empty-state">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" stroke-width="1.5"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4-4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+                        <h3>No patients found</h3>
+                        <p>Try adjusting your search or filters</p>
+                    </div>
+                </td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = patients.map(p => `
+            <tr onclick="showPatient('${p.patient_id}')">
+                <td>
+                    <div class="patient-name">${p.first_name} ${p.last_name}</div>
+                    <div class="patient-id">${p.patient_id.slice(0, 8)}...</div>
+                </td>
+                <td>${formatDate(p.date_of_birth)}</td>
+                <td><span class="badge ${sexBadgeClass(p.sex)}">${p.sex}</span></td>
+                <td>${formatPhone(p.phone_number)}</td>
+                <td>${p.city}, ${p.state} ${p.zip_code}</td>
+                <td>${p.insurance_provider || '<span style="color:var(--gray-300)">None</span>'}</td>
+                <td>${formatTimestamp(p.created_at)}</td>
+            </tr>
+        `).join('');
+    }
+
+    function showPatient(id) {
+        const p = allPatients.find(x => x.patient_id === id);
+        if (!p) return;
+
+        document.getElementById('modalTitle').textContent = `${p.first_name} ${p.last_name}`;
+        document.getElementById('modalContent').innerHTML = `
+            <div class="detail-group">
+                <div class="detail-label">Patient ID</div>
+                <div class="detail-value" style="font-family:monospace;font-size:13px">${p.patient_id}</div>
+            </div>
+            <div class="detail-group">
+                <div class="detail-label">Date of Birth</div>
+                <div class="detail-value">${formatDate(p.date_of_birth)}</div>
+            </div>
+            <div class="detail-group">
+                <div class="detail-label">Sex</div>
+                <div class="detail-value">${p.sex}</div>
+            </div>
+            <div class="detail-group">
+                <div class="detail-label">Phone</div>
+                <div class="detail-value">${formatPhone(p.phone_number)}</div>
+            </div>
+            <div class="detail-group">
+                <div class="detail-label">Email</div>
+                <div class="detail-value ${!p.email ? 'empty' : ''}">${p.email || 'Not provided'}</div>
+            </div>
+            <div class="detail-group">
+                <div class="detail-label">Preferred Language</div>
+                <div class="detail-value">${p.preferred_language || 'English'}</div>
+            </div>
+
+            <div class="detail-section-title">Address</div>
+            <div class="detail-group full-width">
+                <div class="detail-label">Street Address</div>
+                <div class="detail-value">${p.address_line_1}${p.address_line_2 ? ', ' + p.address_line_2 : ''}</div>
+            </div>
+            <div class="detail-group">
+                <div class="detail-label">City</div>
+                <div class="detail-value">${p.city}</div>
+            </div>
+            <div class="detail-group">
+                <div class="detail-label">State &amp; ZIP</div>
+                <div class="detail-value">${US_STATES[p.state] || p.state} ${p.zip_code}</div>
+            </div>
+
+            <div class="detail-section-title">Insurance</div>
+            <div class="detail-group">
+                <div class="detail-label">Provider</div>
+                <div class="detail-value ${!p.insurance_provider ? 'empty' : ''}">${p.insurance_provider || 'Not provided'}</div>
+            </div>
+            <div class="detail-group">
+                <div class="detail-label">Member ID</div>
+                <div class="detail-value ${!p.insurance_member_id ? 'empty' : ''}">${p.insurance_member_id || 'Not provided'}</div>
+            </div>
+
+            <div class="detail-section-title">Emergency Contact</div>
+            <div class="detail-group">
+                <div class="detail-label">Name</div>
+                <div class="detail-value ${!p.emergency_contact_name ? 'empty' : ''}">${p.emergency_contact_name || 'Not provided'}</div>
+            </div>
+            <div class="detail-group">
+                <div class="detail-label">Phone</div>
+                <div class="detail-value ${!p.emergency_contact_phone ? 'empty' : ''}">${p.emergency_contact_phone ? formatPhone(p.emergency_contact_phone) : 'Not provided'}</div>
+            </div>
+
+            <div class="detail-section-title">Record Info</div>
+            <div class="detail-group">
+                <div class="detail-label">Created</div>
+                <div class="detail-value">${formatTimestamp(p.created_at)}</div>
+            </div>
+            <div class="detail-group">
+                <div class="detail-label">Last Updated</div>
+                <div class="detail-value">${formatTimestamp(p.updated_at)}</div>
+            </div>
+        `;
+
+        const deleteBtn = document.getElementById('deleteBtn');
+        deleteBtn.onclick = () => deletePatient(id, `${p.first_name} ${p.last_name}`);
+
+        document.getElementById('modal').classList.add('active');
+    }
+
+    function closeModal() {
+        document.getElementById('modal').classList.remove('active');
+    }
+
+    async function deletePatient(id, name) {
+        if (!confirm(`Are you sure you want to delete ${name}'s record?`)) return;
+
+        try {
+            const res = await fetch(`${API}/patients/${id}`, { method: 'DELETE' });
+            if (res.ok) {
+                showToast(`${name}'s record has been deleted`, 'success');
+                closeModal();
+                loadPatients();
+            } else {
+                showToast('Failed to delete patient', 'error');
+            }
+        } catch (e) {
+            showToast('Failed to delete patient', 'error');
+        }
+    }
+
+    function showToast(message, type = 'success') {
+        const toast = document.getElementById('toast');
+        toast.textContent = message;
+        toast.className = `toast ${type} show`;
+        setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+
+    // Event listeners
+    document.getElementById('searchInput').addEventListener('input', filterAndRender);
+    document.getElementById('stateFilter').addEventListener('change', filterAndRender);
+    document.getElementById('sexFilter').addEventListener('change', filterAndRender);
+    document.getElementById('modal').addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) closeModal();
+    });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeModal();
+    });
+
+    // Initial load
+    loadPatients();
+</script>
+</body>
+</html>
